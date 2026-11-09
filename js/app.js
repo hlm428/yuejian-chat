@@ -304,28 +304,17 @@ function openSettings(notice) {
   $id('baseInput').value = localStorage.getItem('yuechat-base') || API_BASE_DEFAULT;
 }
 
-const PROXY_CMD =
-  'npx -y cors-anywhere-simple 8888 https://api.exaone.ai   # 或用 python: python -c "import httpx" 也行——见 README';
+/** 本地 CORS 代理一键命令（EXAONE 禁止网页直连时用） */
+const PROXY_CMD = [
+  '# 本地起一个 CORS 代理（node 版，监听 8888，转发到 EXAONE）：',
+  'npx -y local-cors-proxy --proxyUrl https://api.exaone.ai --port 8888',
+  '然后把本页设置里的接口地址改成 http://localhost:8888/v1 即可',
+].join(String.fromCharCode(10));
 
-function saveKey() {
-  const v = $id('keyInput').value.trim();
-  const b = $id('baseInput').value.trim().replace(/\/$/, '');
-  localStorage.setItem(store.key, v);
-  localStorage.setItem('yuechat-base', b || API_BASE_DEFAULT);
-  $id('settingsNotice').textContent = v ? '已保存，可以开始聊天了。' : '已清空 Key。';
-  setTimeout(closeSettings, 800);
-}
-
-/** 把本地代理一键复制命令放进剪贴板 */
+/** 把本地代理命令复制进剪贴板 */
 async function copyProxyCmd() {
-  const cmd =
-    '# 本地起一个 CORS 代理（node 版，监听 8888，转发到 EXAONE）
-' +
-    'npx -y local-cors-proxy --proxyUrl https://api.exaone.ai --port 8888
-' +
-    '# 然后本页设置里把接口地址改成 http://localhost:8888/v1 即可';
   try {
-    await navigator.clipboard.writeText(cmd);
+    await navigator.clipboard.writeText(PROXY_CMD);
     $id('settingsNotice').textContent = '已复制代理命令——到终端跑起来，再把接口地址改成 http://localhost:8888/v1';
   } catch {
     $id('settingsNotice').textContent = '复制失败，请手动选中命令复制。';
@@ -338,7 +327,9 @@ function closeSettings() {
 
 function saveKey() {
   const v = $id('keyInput').value.trim();
+  const b = $id('baseInput').value.trim().replace(new RegExp(String.fromCharCode(47) + '$'), '');
   localStorage.setItem(store.key, v);
+  localStorage.setItem('yuechat-base', b || API_BASE_DEFAULT);
   $id('settingsNotice').textContent = v ? '已保存，可以开始聊天了。' : '已清空 Key。';
   setTimeout(closeSettings, 800);
 }
