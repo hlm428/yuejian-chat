@@ -58,7 +58,12 @@
           <input id="baseInput" type="text" placeholder="https://api.exaone.ai/v1" />
         </label>
         <p class="settingsHint">模型：k-exaone-2.5-32b（OpenAI 兼容 /chat/completions）</p>
-        <button id="copyProxy" class="ghostBtn copyProxy">📋 复制本地代理命令（临时方案）</button>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button id="testConn" class="btn" style="border:1px solid var(--accent); color:var(--accent); border-radius:12px; padding:8px 14px; cursor:pointer; font-size:12.5px; background:transparent">🔌 测试连接</button>
+          <span id="testResult" style="font-size:12px; align-self:center; color:var(--sub)"></span>
+        </div>
+        <button id="copyProxy" class="ghostBtn copyProxy">📋 复制局域网代理命令（手机线路·推荐）</button>
+        <a class="ghostBtn copyProxy" style="text-decoration:none; text-align:center" href="https://github.com/hlm428/exaone-proxy#readme" target="_blank" rel="noreferrer">☁️ 云端 Worker（需手机网络能访问 workers.dev）</a>
         <a class="ghostBtn copyProxy" style="text-decoration:none; text-align:center" href="https://github.com/hlm428/exaone-proxy#部署二选一推荐-a" target="_blank" rel="noreferrer">☁️ 推荐：部署云端代理（Cloudflare Workers 免费档，点看一步命令）</a>
         <div class="settingsBtns">
           <button id="keyClose" class="ghostBtn">取消</button>

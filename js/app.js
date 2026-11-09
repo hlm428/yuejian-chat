@@ -306,10 +306,34 @@ function openSettings(notice) {
 
 /** 本地 CORS 代理一键命令（EXAONE 禁止网页直连时用） */
 const PROXY_CMD = [
-  '# 本地起一个 CORS 代理（node 版，监听 8888，转发到 EXAONE）：',
-  'npx -y local-cors-proxy --proxyUrl https://api.exaone.ai --port 8888',
-  '然后把本页设置里的接口地址改成 http://localhost:8888/v1 即可',
+  '# 局域网代理（手机线路）：把本仓库的 local-proxy.js 存到电脑上，然后：',
+  'node local-proxy.js',
+  '# 手机连同一 Wi-Fi，本页接口地址填 http://<电脑局域网IP>:8787/v1（启动时会打印具体地址）',
 ].join(String.fromCharCode(10));
+
+/** 连接测试：区分「地址可达但 Key 错」和「网络根本连不上」 */
+async function testConnection() {
+  const el = $('testResult');
+  const base = $id('baseInput').value.trim().replace(new RegExp(String.fromCharCode(47) + '$'), '');
+  el.textContent = '测试中…';
+  try {
+    const r = await fetch(base + '/chat/completions', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer probe-invalid-key', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: API_MODEL, messages: [{ role: 'user', content: 'ping' }] }),
+    });
+    if (r.status === 401 || r.status === 403) {
+      el.textContent = '✓ 地址可达（401 = Key 无效——填对 Key 就能聊）';
+      el.style.color = '#2e9e6b';
+    } else {
+      el.textContent = '✓ 地址可达，HTTP ' + r.status;
+      el.style.color = '#2e9e6b';
+    }
+  } catch (e) {
+    el.textContent = '✗ 连不上这个地址——这个网络访问不了它。手机请用「局域网代理」线路（电脑跑 node local-proxy.js 后填电脑 IP 地址），或换能访问 workers.dev 的网络。';
+    el.style.color = '#d98ca0';
+  }
+}
 
 /** 把本地代理命令复制进剪贴板 */
 async function copyProxyCmd() {
@@ -343,6 +367,7 @@ function boot() {
   $id('keySave').onclick = saveKey;
   $id('keyClose').onclick = closeSettings;
   $id('copyProxy').onclick = () => void copyProxyCmd();
+  $id('testConn').onclick = () => void testConnection();
   $id('input').addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
