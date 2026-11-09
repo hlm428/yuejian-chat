@@ -136,12 +136,12 @@ let pendingClear = false;
 
 function askClearChat() {
   const name = current ? current.name : '';
-  $('confirmTitle').textContent = '清空聊天记录';
-  $('confirmText').innerHTML = `确定清空 <b>${name}</b> 的聊天记录和好感度吗？<br/>其他女主不受影响。清空后会重新出现她的每日问候。`;
+  $id('confirmTitle').textContent = '清空聊天记录';
+  $id('confirmText').innerHTML = `确定清空 <b>${name}</b> 的聊天记录和好感度吗？<br/>其他女主不受影响。清空后会重新出现她的每日问候。`;
   pendingClear = true;
-  $('confirmMask').classList.add('open');
+  $id('confirmMask').classList.add('open');
   // 复用确认框：本次确认执行清空
-  $('confirmOk').onclick = () => {
+  $id('confirmOk').onclick = () => {
     if (pendingClear) {
       const ch = current;
       localStorage.removeItem(store.msgs(ch.id));
@@ -149,8 +149,8 @@ function askClearChat() {
       localStorage.removeItem(store.greet(ch.id));
       localStorage.removeItem(store.milestone(ch.id));
       pendingClear = false;
-      $('confirmMask').classList.remove('open');
-      $('confirmOk').onclick = confirmDeletePerson;
+      $id('confirmMask').classList.remove('open');
+      $id('confirmOk').onclick = confirmDeletePerson;
       renderAffinity();
       renderMessages();
       maybeDailyGreeting(ch);
@@ -161,7 +161,7 @@ function askClearChat() {
 }
 
 function showToast(msg) {
-  const t = document.getElementById('toast');
+  const t = $id('toast');
   if (!t) return;
   t.textContent = msg;
   t.style.display = 'block';
