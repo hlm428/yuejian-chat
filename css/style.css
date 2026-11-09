@@ -1,0 +1,154 @@
+/* 月见公寓聊天页 · 淡彩柔和 · 手机竖屏优先 */
+
+:root {
+  --bg: #fdf9f2;
+  --card: #ffffff;
+  --text: #4a4038;
+  --sub: #9b8f84;
+  --accent: #d9a2b0;
+  --bubble-her: #ffffff;
+  --bubble-me: #f6d9e2;
+  --line: #f0e6dc;
+}
+
+/* 四位女主的房间配色 */
+body.theme-zhixi { --bg: #fdf3f5; --accent: #d98ca0; --bubble-me: #f8dce5; --line: #f3e2e7; }        /* 粉奶油 */
+body.theme-xiyue { --bg: #fbf6e9; --accent: #c9a86a; --bubble-me: #f3e7c9; --line: #efe5cd; }      /* 香槟金 */
+body.theme-yunsheng { --bg: #f0f5f8; --accent: #7f9ab0; --bubble-me: #d9e6ef; --line: #dfe8ee; }   /* 冷灰蓝 */
+body.theme-yelan { --bg: #2a2140; --card: #382d52; --text: #e8e0f5; --sub: #a493c4;               /* 深紫 */
+  --accent: #a97fd6; --bubble-her: #382d52; --bubble-me: #584380; --line: #4a3c68; }
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  transition: background 0.35s ease;
+}
+
+.page {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- 选人 ---------- */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 18px 6px;
+}
+.topbar h1 { font-size: 22px; letter-spacing: 2px; }
+
+.iconBtn {
+  border: none; background: transparent; font-size: 20px; cursor: pointer;
+  color: var(--sub); padding: 6px 8px; border-radius: 10px;
+}
+.iconBtn:hover { background: var(--line); }
+
+.pickTip { padding: 0 18px 10px; font-size: 13px; color: var(--sub); }
+
+.charGrid { display: flex; flex-direction: column; gap: 14px; padding: 6px 16px 16px; }
+
+.charCard {
+  display: flex; gap: 0; align-items: stretch;
+  background: var(--card); border-radius: 18px; overflow: hidden;
+  border: 1px solid var(--line); box-shadow: 0 6px 18px rgba(90, 70, 60, 0.08);
+  cursor: pointer; text-align: left; padding: 0; transition: transform 0.15s ease;
+  color: var(--text);
+}
+.charCard:hover { transform: translateY(-2px); }
+.charCard img { width: 132px; height: 172px; object-fit: cover; object-position: top; background: var(--line); }
+.charInfo { flex: 1; padding: 14px 14px 12px; display: flex; flex-direction: column; gap: 5px; }
+.charName { font-size: 18px; font-weight: 700; }
+.charRoom { font-size: 12px; color: var(--accent); font-weight: 600; }
+.charIntro { font-size: 12.5px; color: var(--sub); line-height: 1.5; flex: 1; }
+.charAff { font-size: 12px; color: var(--sub); }
+.charAff b { color: var(--accent); }
+
+.foot { text-align: center; font-size: 11px; color: var(--sub); padding: 10px 0 18px; margin-top: auto; }
+
+/* ---------- 聊天 ---------- */
+
+.chatTop {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px; border-bottom: 1px solid var(--line);
+  background: var(--card);
+  position: sticky; top: 0; z-index: 2;
+}
+.chatAvatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; object-position: top; background: var(--line); }
+.chatTitle { flex: 1; min-width: 0; }
+#chatName { font-size: 16px; font-weight: 700; }
+#chatRoom { font-size: 11px; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.affWrap { text-align: right; }
+.affText { font-size: 10.5px; color: var(--sub); white-space: nowrap; }
+.affTrack { width: 72px; height: 5px; border-radius: 3px; background: var(--line); margin-top: 3px; overflow: hidden; }
+.affBar { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.4s ease; }
+
+.messages {
+  flex: 1; overflow-y: auto; padding: 14px 14px 6px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+
+.bubble {
+  max-width: 78%; padding: 9px 13px; border-radius: 16px;
+  font-size: 14.5px; line-height: 1.6; white-space: pre-wrap; word-break: break-word;
+}
+.bubble.hers { align-self: flex-start; background: var(--bubble-her); border: 1px solid var(--line); border-bottom-left-radius: 5px; }
+.bubble.mine { align-self: flex-end; background: var(--bubble-me); border-bottom-right-radius: 5px; }
+.bubble.typing { color: var(--sub); font-size: 13px; font-style: italic; }
+
+.openers { display: flex; flex-direction: column; gap: 6px; padding: 4px 14px 6px; }
+.opener {
+  border: 1px dashed var(--accent); background: transparent; color: var(--text);
+  border-radius: 14px; padding: 8px 12px; font-size: 13px; cursor: pointer; text-align: left;
+  transition: background 0.15s;
+}
+.opener:hover { background: var(--line); }
+
+.inputBar {
+  display: flex; gap: 8px; padding: 10px 12px calc(12px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line); background: var(--card);
+  position: sticky; bottom: 0;
+}
+#input {
+  flex: 1; resize: none; border: 1px solid var(--line); border-radius: 14px;
+  padding: 10px 12px; font-size: 14.5px; font-family: inherit; background: var(--bg); color: var(--text);
+  outline: none; max-height: 120px;
+}
+#input:focus { border-color: var(--accent); }
+.sendBtn {
+  border: none; background: var(--accent); color: #fff; font-size: 14.5px;
+  border-radius: 14px; padding: 0 18px; cursor: pointer; font-weight: 600;
+}
+.sendBtn:active { opacity: 0.85; }
+
+/* ---------- 设置弹层 ---------- */
+
+.settingsMask {
+  position: fixed; inset: 0; background: rgba(40, 30, 30, 0.45);
+  display: none; align-items: center; justify-content: center; z-index: 50; padding: 20px;
+}
+.settingsMask.open { display: flex; }
+.settingsCard {
+  width: 100%; max-width: 360px; background: var(--card); border-radius: 18px; padding: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+.settingsCard h2 { font-size: 16px; margin-bottom: 10px; }
+.settingsNotice { font-size: 12.5px; color: #d98ca0; margin-bottom: 8px; min-height: 1em; }
+.settingsLabel { display: block; font-size: 12.5px; color: var(--sub); }
+.settingsLabel input {
+  width: 100%; margin-top: 6px; padding: 10px 12px; border-radius: 12px;
+  border: 1px solid var(--line); background: var(--bg); color: var(--text); font-size: 14px; outline: none;
+}
+.settingsHint { font-size: 11px; color: var(--sub); margin-top: 8px; }
+.settingsBtns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+.ghostBtn { border: 1px solid var(--line); background: transparent; color: var(--text); border-radius: 12px; padding: 8px 16px; cursor: pointer; }
+.primaryBtn { border: none; background: var(--accent); color: #fff; border-radius: 12px; padding: 8px 18px; cursor: pointer; font-weight: 600; }
