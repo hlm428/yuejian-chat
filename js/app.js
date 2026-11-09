@@ -5,11 +5,14 @@
  */
 
 const API_MODEL = 'k-exaone-2.5-32b';
-/** 默认 EXAONE 官方接口；EXAONE 禁止浏览器直连（CORS），可到设置里改成本地代理 / 兼容网关 */
-const API_BASE_DEFAULT = 'https://api.exaone.ai/v1';
+/** 默认走 Cloudflare Workers 云端代理；EXAONE 禁止浏览器直连（CORS），直连地址会被拦 */
+const API_BASE_DEFAULT = 'https://exaone-chat-proxy.carbonated-conkerberry.workers.dev/v1';
 
 function apiBase() {
-  return (localStorage.getItem('yuechat-base') || API_BASE_DEFAULT).replace(/\/$/, '');
+  const stored = localStorage.getItem('yuechat-base') || '';
+  // 旧的直连地址会被 EXAONE 的 CORS 拦掉，强制走云端代理
+  if (!stored || stored.includes('api.exaone.ai')) return API_BASE_DEFAULT;
+  return stored.replace(/\/$/, '');
 }
 
 const store = {
