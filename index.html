@@ -53,7 +53,12 @@
           <span>EXAONE API Key（只存本地，不上传）</span>
           <input id="keyInput" type="password" placeholder="sk-…" />
         </label>
-        <p class="settingsHint">接口：https://api.exaone.ai/v1 · 模型：k-exaone-2.5-32b</p>
+        <label class="settingsLabel">
+          <span>接口地址（EXAONE 禁止网页直连时，改成你的本地代理）</span>
+          <input id="baseInput" type="text" placeholder="https://api.exaone.ai/v1" />
+        </label>
+        <p class="settingsHint">模型：k-exaone-2.5-32b（OpenAI 兼容 /chat/completions）</p>
+        <button id="copyProxy" class="ghostBtn copyProxy">📋 复制本地代理命令（EXAONE 拦网页直连时用）</button>
         <div class="settingsBtns">
           <button id="keyClose" class="ghostBtn">取消</button>
           <button id="keySave" class="primaryBtn">保存</button>

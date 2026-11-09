@@ -4,8 +4,13 @@
  * Key 只存浏览器 localStorage；聊天记录/好感度也在本地。
  */
 
-const API_BASE = 'https://api.exaone.ai/v1';
 const API_MODEL = 'k-exaone-2.5-32b';
+/** 默认 EXAONE 官方接口；EXAONE 禁止浏览器直连（CORS），可到设置里改成本地代理 / 兼容网关 */
+const API_BASE_DEFAULT = 'https://api.exaone.ai/v1';
+
+function apiBase() {
+  return (localStorage.getItem('yuechat-base') || API_BASE_DEFAULT).replace(/\/$/, '');
+}
 
 const store = {
   key: 'yuechat-key',
@@ -233,7 +238,7 @@ async function send() {
     .slice(-20)
     .map((m) => ({ role: m.role, content: m.content }));
   try {
-    const reply = await callExaone(apiKey, history);
+    const reply = await callExaone(apiKey, history, apiBase());
     // 打字机效果：逐字出，不一下子全蹦
     typingBubble.remove();
     const bubble = appendBubble('assistant', '', true);
@@ -250,15 +255,18 @@ async function send() {
     }, 28);
   } catch (err) {
     typingBubble.remove();
-    const msg = err && err.message ? err.message : String(err);
+    const raw = err && err.message ? err.message : String(err);
+    const msg = /failed to fetch|networkerror|load failed/i.test(raw)
+      ? `${raw}——多半是 EXAONE 禁止网页直连（CORS）。开一个本地代理再在设置里改接口地址即可（设置里有现成命令，一键复制）`
+      : raw;
     appendBubble('assistant', `（出错了：${msg}）`);
   } finally {
     busy = false;
   }
 }
 
-async function callExaone(apiKey, history) {
-  const res = await fetch(`${API_BASE}/chat/completions`, {
+async function callExaone(apiKey, history, base) {
+  const res = await fetch(`${base}/chat/completions`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -293,6 +301,35 @@ function openSettings(notice) {
   $id('settings').classList.add('open');
   $id('settingsNotice').textContent = notice || '';
   $id('keyInput').value = localStorage.getItem(store.key) || '';
+  $id('baseInput').value = localStorage.getItem('yuechat-base') || API_BASE_DEFAULT;
+}
+
+const PROXY_CMD =
+  'npx -y cors-anywhere-simple 8888 https://api.exaone.ai   # 或用 python: python -c "import httpx" 也行——见 README';
+
+function saveKey() {
+  const v = $id('keyInput').value.trim();
+  const b = $id('baseInput').value.trim().replace(/\/$/, '');
+  localStorage.setItem(store.key, v);
+  localStorage.setItem('yuechat-base', b || API_BASE_DEFAULT);
+  $id('settingsNotice').textContent = v ? '已保存，可以开始聊天了。' : '已清空 Key。';
+  setTimeout(closeSettings, 800);
+}
+
+/** 把本地代理一键复制命令放进剪贴板 */
+async function copyProxyCmd() {
+  const cmd =
+    '# 本地起一个 CORS 代理（node 版，监听 8888，转发到 EXAONE）
+' +
+    'npx -y local-cors-proxy --proxyUrl https://api.exaone.ai --port 8888
+' +
+    '# 然后本页设置里把接口地址改成 http://localhost:8888/v1 即可';
+  try {
+    await navigator.clipboard.writeText(cmd);
+    $id('settingsNotice').textContent = '已复制代理命令——到终端跑起来，再把接口地址改成 http://localhost:8888/v1';
+  } catch {
+    $id('settingsNotice').textContent = '复制失败，请手动选中命令复制。';
+  }
 }
 
 function closeSettings() {
@@ -314,6 +351,7 @@ function boot() {
   $id('settingsBtn').onclick = () => openSettings('');
   $id('keySave').onclick = saveKey;
   $id('keyClose').onclick = closeSettings;
+  $id('copyProxy').onclick = () => void copyProxyCmd();
   $id('input').addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
