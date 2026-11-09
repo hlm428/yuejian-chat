@@ -5,8 +5,20 @@
  */
 
 const API_MODEL = 'k-exaone-2.5-32b';
-/** 默认走 Cloudflare Workers 云端代理；EXAONE 禁止浏览器直连（CORS），直连地址会被拦 */
+/** 主线路：Cloudflare Workers 云端代理（EXAONE 禁浏览器直连；workers.dev 大陆直连可能被墙） */
 const API_BASE_DEFAULT = 'https://exaone-chat-proxy.carbonated-conkerberry.workers.dev/v1';
+/** 备用线路：Vercel 代理（claim 转正后对外可用；可用 localStorage yuechat-base-backup 覆盖） */
+const API_BASE_BACKUP = 'https://racing-sable-m0jkiag.tmp.now/api';
+
+function apiBackup() {
+  const stored = localStorage.getItem('yuechat-base-backup') || '';
+  return stored ? stored.replace(/\/$/, '') : API_BASE_BACKUP;
+}
+
+/** 网络层错误（该换备用线路重试的） */
+function isNetError(msg) {
+  return /failed to fetch|networkerror|load failed|connection (refused|reset|closed)/i.test(msg);
+}
 
 function apiBase() {
   const stored = localStorage.getItem('yuechat-base') || '';
@@ -259,8 +271,8 @@ async function send() {
   } catch (err) {
     typingBubble.remove();
     const raw = err && err.message ? err.message : String(err);
-    const msg = /failed to fetch|networkerror|load failed/i.test(raw)
-      ? `${raw}——多半是 EXAONE 禁止网页直连（CORS）。开一个本地代理再在设置里改接口地址即可（设置里有现成命令，一键复制）`
+    const msg = isNetError(raw)
+      ? `${raw}——主线路和备用线路的网络都连不上。手机请用「局域网代理」线路（电脑跑 node local-proxy.js，设置里填电脑 IP 地址），或换能访问 workers.dev / vercel.app 的网络。`
       : raw;
     appendBubble('assistant', `（出错了：${msg}）`);
   } finally {
@@ -268,7 +280,20 @@ async function send() {
   }
 }
 
+/** 带自动换路：主线路网络层不通（Failed to fetch 等）时自动用备用线路重发一次；401 等明确报错不换路 */
 async function callExaone(apiKey, history, base) {
+  try {
+    return await callExaoneOnce(apiKey, history, base);
+  } catch (e) {
+    const raw = e && e.message ? e.message : String(e);
+    if (!isNetError(raw)) throw e;
+    const backup = apiBackup();
+    if (!backup || backup === base) throw e;
+    return await callExaoneOnce(apiKey, history, backup);
+  }
+}
+
+async function callExaoneOnce(apiKey, history, base) {
   const res = await fetch(`${base}/chat/completions`, {
     method: 'POST',
     headers: {
@@ -315,27 +340,31 @@ const PROXY_CMD = [
 ].join(String.fromCharCode(10));
 
 /** 连接测试：区分「地址可达但 Key 错」和「网络根本连不上」 */
-async function testConnection() {
-  const el = $('testResult');
-  const base = $id('baseInput').value.trim().replace(new RegExp(String.fromCharCode(47) + '$'), '');
-  el.textContent = '测试中…';
+/** 测单条线路：可达性 + HTTP 状态 */
+async function probeLine(base) {
   try {
     const r = await fetch(base + '/chat/completions', {
       method: 'POST',
       headers: { Authorization: 'Bearer probe-invalid-key', 'Content-Type': 'application/json' },
       body: JSON.stringify({ model: API_MODEL, messages: [{ role: 'user', content: 'ping' }] }),
     });
-    if (r.status === 401 || r.status === 403) {
-      el.textContent = '✓ 地址可达（401 = Key 无效——填对 Key 就能聊）';
-      el.style.color = '#2e9e6b';
-    } else {
-      el.textContent = '✓ 地址可达，HTTP ' + r.status;
-      el.style.color = '#2e9e6b';
-    }
+    if (r.status === 401 || r.status === 403) return { ok: true, note: '可达（401=探针 Key 无效，正常）' };
+    return { ok: true, note: '可达，HTTP ' + r.status };
   } catch (e) {
-    el.textContent = '✗ 连不上这个地址——这个网络访问不了它。手机请用「局域网代理」线路（电脑跑 node local-proxy.js 后填电脑 IP 地址），或换能访问 workers.dev 的网络。';
-    el.style.color = '#d98ca0';
+    return { ok: false, note: '连不上' };
   }
+}
+
+/** 测试连接：主线路 + 备用线路分别显示 */
+async function testConnection() {
+  const el = $('testResult');
+  const base = $id('baseInput').value.trim().replace(new RegExp(String.fromCharCode(47) + '$'), '');
+  el.textContent = '测试中…（主线路 → 备用线路）';
+  const main = await probeLine(base);
+  const backup = await probeLine(apiBackup());
+  const mark = (r) => (r.ok ? '✓ ' : '✗ ') + r.note;
+  el.style.color = main.ok || backup.ok ? '#2e9e6b' : '#d98ca0';
+  el.textContent = `主：${mark(main)}｜备：${mark(backup)}${!main.ok && !backup.ok ? '——两条都连不上：这个网络到 workers.dev / vercel.app 都不通，请用「局域网代理」线路（电脑跑 node local-proxy.js，接口地址填电脑 IP）。' : ''}`;
 }
 
 /** 把本地代理命令复制进剪贴板 */
