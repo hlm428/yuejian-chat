@@ -101,9 +101,27 @@ body {
   max-width: 78%; padding: 9px 13px; border-radius: 16px;
   font-size: 14.5px; line-height: 1.6; white-space: pre-wrap; word-break: break-word;
 }
-.bubble.hers { align-self: flex-start; background: var(--bubble-her); border: 1px solid var(--line); border-bottom-left-radius: 5px; }
-.bubble.mine { align-self: flex-end; background: var(--bubble-me); border-bottom-right-radius: 5px; }
+.bubbleRow { display: flex; flex-direction: column; max-width: 78%; }
+.bubbleRow.mine { align-self: flex-end; align-items: flex-end; }
+.bubbleRow.hers { align-self: flex-start; align-items: flex-start; }
+.bubble.hers { background: var(--bubble-her); border: 1px solid var(--line); border-bottom-left-radius: 5px; }
+.bubble.mine { background: var(--bubble-me); border-bottom-right-radius: 5px; }
 .bubble.typing { color: var(--sub); font-size: 13px; font-style: italic; }
+.bubbleTime { font-size: 10px; color: var(--sub); margin-top: 3px; opacity: 0.8; padding: 0 4px; }
+
+/* 手机竖屏：键盘弹出时输入区跟随视觉视口，避免被挡 */
+@supports (height: 100dvh) {
+  .page { min-height: 100dvh; }
+  #chat.page { min-height: 100dvh; }
+}
+@media (max-width: 480px) {
+  .chatTop { padding: 10px; gap: 8px; }
+  #chatRoom { max-width: 110px; }
+  .affWrap { display: none; } /* 小屏收起好感度条，留空间给标题 */
+  .bubble { max-width: 86%; font-size: 14px; }
+  .inputBar { padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); }
+  .settingsCard { max-height: 90dvh; overflow-y: auto; }
+}
 
 .openers { display: flex; flex-direction: column; gap: 6px; padding: 4px 14px 6px; }
 .opener {

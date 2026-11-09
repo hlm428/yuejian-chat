@@ -130,6 +130,50 @@ function backToPicker() {
   renderPicker();
 }
 
+/* ---------- 清空当前女主的记录（确认后执行，不影响其他女主） ---------- */
+
+let pendingClear = false;
+
+function askClearChat() {
+  const name = current ? current.name : '';
+  $('confirmTitle').textContent = '清空聊天记录';
+  $('confirmText').innerHTML = `确定清空 <b>${name}</b> 的聊天记录和好感度吗？<br/>其他女主不受影响。清空后会重新出现她的每日问候。`;
+  pendingClear = true;
+  $('confirmMask').classList.add('open');
+  // 复用确认框：本次确认执行清空
+  $('confirmOk').onclick = () => {
+    if (pendingClear) {
+      const ch = current;
+      localStorage.removeItem(store.msgs(ch.id));
+      localStorage.removeItem(store.aff(ch.id));
+      localStorage.removeItem(store.greet(ch.id));
+      localStorage.removeItem(store.milestone(ch.id));
+      pendingClear = false;
+      $('confirmMask').classList.remove('open');
+      $('confirmOk').onclick = confirmDeletePerson;
+      renderAffinity();
+      renderMessages();
+      maybeDailyGreeting(ch);
+      renderOpeners();
+      showToast(`已清空「${name}」的记录`);
+    }
+  };
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => (t.style.display = 'none'), 2200);
+}
+
+/** 时间戳 → HH:MM */
+function hm(ts) {
+  const d = new Date(ts);
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
 function renderAffinity() {
   const aff = loadJSON(store.aff(current.id), 0);
   $id('affBar').style.width = `${Math.min(100, aff)}%`;
@@ -144,18 +188,27 @@ function renderMessages() {
   const wrap = $id('messages');
   wrap.innerHTML = '';
   for (const m of messages()) {
-    appendBubble(m.role, m.content, false);
+    appendBubble(m.role, m.content, false, false, m.at);
   }
   wrap.scrollTop = wrap.scrollHeight;
 }
 
-function appendBubble(role, content, scroll = true, typing = false) {
+function appendBubble(role, content, scroll = true, typing = false, ts = null) {
   const wrap = $id('messages');
+  const holder = document.createElement('div');
+  holder.className = `bubbleRow ${role === 'user' ? 'mine' : 'hers'}`;
   const div = document.createElement('div');
   div.className = `bubble ${role === 'user' ? 'mine' : 'hers'}`;
   if (typing) div.classList.add('typing');
   div.textContent = content;
-  wrap.appendChild(div);
+  holder.appendChild(div);
+  if (ts) {
+    const t = document.createElement('div');
+    t.className = 'bubbleTime';
+    t.textContent = hm(ts);
+    holder.appendChild(t);
+  }
+  wrap.appendChild(holder);
   if (scroll) wrap.scrollTop = wrap.scrollHeight;
   return div;
 }
@@ -256,6 +309,7 @@ async function send() {
     const reply = await callExaone(apiKey, history, apiBase());
     // 打字机效果：逐字出，不一下子全蹦
     typingBubble.remove();
+    const replyAt = Date.now();
     const bubble = appendBubble('assistant', '', true);
     pushMsg('assistant', reply);
     let i = 0;
@@ -266,6 +320,13 @@ async function send() {
       if (i >= reply.length) {
         clearInterval(timer);
         bubble.textContent = reply;
+        const holder = bubble.parentElement;
+        if (holder && !holder.querySelector('.bubbleTime')) {
+          const t = document.createElement('div');
+          t.className = 'bubbleTime';
+          t.textContent = hm(replyAt);
+          holder.appendChild(t);
+        }
       }
     }, 28);
   } catch (err) {
@@ -396,6 +457,7 @@ function boot() {
   $id('sendBtn').onclick = send;
   $id('backBtn').onclick = backToPicker;
   $id('settingsBtn').onclick = () => openSettings('');
+  $id('clearBtn').onclick = askClearChat;
   $id('keySave').onclick = saveKey;
   $id('keyClose').onclick = closeSettings;
   $id('copyProxy').onclick = () => void copyProxyCmd();
