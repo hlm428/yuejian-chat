@@ -8,7 +8,7 @@ const API_MODEL = 'k-exaone-2.5-32b';
 /** 主线路：Cloudflare Workers 云端代理（EXAONE 禁浏览器直连；workers.dev 大陆直连可能被墙） */
 const API_BASE_DEFAULT = 'https://exaone-chat-proxy.carbonated-conkerberry.workers.dev/v1';
 /** 备用线路：Vercel 代理（claim 转正后对外可用；可用 localStorage yuechat-base-backup 覆盖） */
-const API_BASE_BACKUP = 'https://racing-sable-m0jkiag.tmp.now/api';
+const API_BASE_BACKUP = 'https://exaone-chat-proxy.vercel.app/api';
 
 function apiBackup() {
   const stored = localStorage.getItem('yuechat-base-backup') || '';
